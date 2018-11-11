@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
@@ -12,35 +13,35 @@ namespace BenchmarkSqlWrite
 		static async Task Main(string[] args)
 		{
 			await Task.CompletedTask;
+			if (args!=null && args.Length>0)
+			{
+				BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+			}
+			else
+			{
+				Stopwatch timer = new Stopwatch();
 
-			BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+				var bench = new WriteBenchmarks();
+				bench.GlobalSetup();
+				timer.Start();
+				for (int index = 0; index<100; index++)
+				{
+					//bench.IterationSetup();
+					//bench.SyncFloat32();
 
+					//bench.IterationSetup();
+					//await bench.AsyncFloat32();
 
-			//Stopwatch timer = new Stopwatch();
+					//bench.ChangeType();
 
-			//var bench = new WriteBenchmarks();
-			//bench.GlobalSetup();
-			//timer.Start();
-			//for (int index = 0; index<100; index++)
-			//{
-			//	//bench.IterationSetup();
-			//	//bench.SyncFloat32();
+					bench.OpenClose();
+				}
+				timer.Stop();
+				bench.GlobalCleanup();
 
-			//	//bench.IterationSetup();
-			//	//await bench.AsyncFloat32();
+				Console.WriteLine(timer.Elapsed);
 
-			//	//bench.ChangeType();
-
-			//	bench.OpenClose();
-			//}
-			//timer.Stop();
-			//bench.GlobalCleanup();
-
-			//Console.WriteLine(timer.Elapsed);
-
-
-
-
+			}
 		}
 	}
 
