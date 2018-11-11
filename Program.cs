@@ -4,7 +4,10 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Toolchains.CsProj;
 
 namespace BenchmarkSqlWrite
 {
@@ -45,10 +48,34 @@ namespace BenchmarkSqlWrite
 		}
 	}
 
+
+
 	[MemoryDiagnoser]
 	[MarkdownExporter]
+	//[Config(typeof(Config))]
+	//[InProcess]
 	public class WriteBenchmarks
 	{
+		public class Config : ManualConfig
+		{
+			public Config()
+			{
+				//Add(
+				//	Job.Default.With(
+				//		CsProjCoreToolchain.From(
+				//			new BenchmarkDotNet.Toolchains.DotNetCli.NetCoreAppSettings(
+				//				"netcoreapp3.0",
+				//				"3.0.100-preview-009738",
+				//				"CoreCLR3.0",
+				//				customDotNetCliPath: @"E:\Programming\csharp7\sdk\dotnet.exe"
+				//			)
+				//		)
+				//	)
+				//);
+				Add(Job.Default.With(CsProjCoreToolchain.NetCoreApp30));
+			}
+		}
+
 		private SqlConnection syncConnection;
 		private SqlConnection asyncConnection;
 		private SqlCommand int32command;
@@ -119,7 +146,7 @@ namespace BenchmarkSqlWrite
 			truncateCommandFloat32.ExecuteNonQuery();
 		}
 
-		//[Benchmark]
+		[Benchmark]
 		public void InsertInt32()
 		{
 			for (int index = 0; index<int32numbers.Length; index++)
@@ -129,7 +156,7 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
-		//[Benchmark]
+		[Benchmark]
 		public void SyncFloat32()
 		{
 			for (int index = 0; index<float32numbers.Length; index++)
@@ -150,7 +177,7 @@ namespace BenchmarkSqlWrite
 		}
 
 
-		[Benchmark]
+		//[Benchmark]
 		public void OpenClose()
 		{
 			for (int index = 0; index<float32numbers.Length; index++)
