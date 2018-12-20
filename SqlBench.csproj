@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,12 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Private.CoreFx.NETCoreApp" Version="4.6.0-preview3-26501-01" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.7.0-dev.18554.1" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.11.2" />
+    <!--<PackageReference Include="Microsoft.Private.CoreFx.NETCoreApp" Version="4.6.0-preview3-26501-01" />-->
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.3" />
+    <PackageReference Include="runtime.native.System.Data.SqlClient.sni" Version="4.6.0-dev.18620.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.7.0-dev.18620.1" />
   </ItemGroup>
 
   <PropertyGroup>
-    <PackageConflictPreferredPackages>Microsoft.Private.CoreFx.NETCoreApp.4.6.0-preview3-26501-01;runtime.win-x64.Microsoft.Private.CoreFx.NETCoreApp;$(PackageConflictPreferredPackages)</PackageConflictPreferredPackages>
+    <!--<PackageConflictPreferredPackages>Microsoft.Private.CoreFx.NETCoreApp.4.6.0-preview3-26501-01;runtime.win-x64.Microsoft.Private.CoreFx.NETCoreApp;$(PackageConflictPreferredPackages)</PackageConflictPreferredPackages>-->
   </PropertyGroup>
 </Project>

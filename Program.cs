@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
@@ -16,7 +17,7 @@ namespace BenchmarkSqlWrite
 		static async Task Main(string[] args)
 		{
 			await Task.CompletedTask;
-			if (args!=null && args.Length>0)
+			if (args != null && args.Length > 0)
 			{
 				BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
 			}
@@ -27,17 +28,20 @@ namespace BenchmarkSqlWrite
 				var bench = new WriteBenchmarks();
 				bench.GlobalSetup();
 				timer.Start();
-				for (int index = 0; index<100; index++)
+				for (int index = 0; index < 100; index++)
 				{
 					//bench.IterationSetup();
 					//bench.SyncFloat32();
+
+					bench.IterationSetup();
+					bench.SyncGuid();
 
 					//bench.IterationSetup();
 					//await bench.AsyncFloat32();
 
 					//bench.ChangeType();
 
-					bench.OpenClose();
+					//bench.OpenClose();
 				}
 				timer.Stop();
 				bench.GlobalCleanup();
@@ -45,6 +49,8 @@ namespace BenchmarkSqlWrite
 				Console.WriteLine(timer.Elapsed);
 
 			}
+
+			Console.ReadLine();
 		}
 	}
 
@@ -53,7 +59,7 @@ namespace BenchmarkSqlWrite
 	[MemoryDiagnoser]
 	[MarkdownExporter]
 	//[Config(typeof(Config))]
-	//[InProcess]
+	[InProcess]
 	public class WriteBenchmarks
 	{
 		public class Config : ManualConfig
@@ -76,25 +82,40 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
+		private string connectionString;
+
 		private SqlConnection syncConnection;
 		private SqlConnection asyncConnection;
 		private SqlCommand int32command;
 		private SqlParameter int32parameter;
 		private SqlCommand syncFloat32command;
 		private SqlParameter syncFloat32parameter;
+		private SqlCommand syncGuidCommand;
+		private SqlParameter syncGuidParameter;
 		private SqlCommand asyncFloat32command;
 		private SqlParameter asyncFloat32parameter;
 
 		private SqlCommand truncateCommandInt32;
 		private SqlCommand truncateCommandFloat32;
+		private SqlCommand truncateCommandGuid;
 
 		private object[] int32numbers;
 		private object[] float32numbers;
+		private object[] guids;
 
 		[GlobalSetup]
 		public void GlobalSetup()
 		{
-
+			connectionString = "Data Source=(local);Initial Catalog=Northwind;Trusted_Connection=true;Connect Timeout=1";
+			//SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+			//builder.IntegratedSecurity = false;
+			//builder.UserID = "user";
+			//builder.Password = "pass";
+			//builder.PersistSecurityInfo = true;
+			//builder.MultipleActiveResultSets = true;
+			//connectionString = builder.ToString();
+			//Console.WriteLine(connectionString);
+			connectionString = "Data Source=(local);Initial Catalog=Scratch;Integrated Security=false;Persist Security Info=True;User ID=user;Password=pass;Connect Timeout=1;MultipleActiveResultSets=True;";
 
 			int32numbers = new object[1000];  //values in boxes so we don't box in the benchmark
 			Random random = new Random();
@@ -109,24 +130,35 @@ namespace BenchmarkSqlWrite
 				float32numbers[index]=(float)random.NextDouble();
 			}
 
-			syncConnection = new SqlConnection("Data Source=(local);Initial Catalog=Northwind;Trusted_Connection=true;;Connect Timeout=1");
+			guids = new object[1000];
+			for (int index = 0; index < guids.Length; index++)
+			{
+				guids[index] = Guid.NewGuid();
+			}
+
+			syncConnection = new SqlConnection(connectionString);
 			syncConnection.Open();
 
-			asyncConnection = new SqlConnection("Data Source=(local);Initial Catalog=Northwind;Trusted_Connection=true;;Connect Timeout=1");
+			asyncConnection = new SqlConnection(connectionString);
 			asyncConnection.OpenAsync();
 
 			int32command = new SqlCommand("INSERT INTO Int32(value) VALUES (@value)", syncConnection);
 			int32parameter = int32command.Parameters.Add("@value", System.Data.SqlDbType.Int, 4);
 			//int32command.Prepare();
 
-
-
 			//syncFloat32command = new SqlCommand("INSERT INTO Float32(value) VALUES (@value)", syncConnection);
-			syncFloat32command = new SqlCommand("InsertFloat", syncConnection);
+			syncFloat32command = new SqlCommand("InsertFloat32", syncConnection);
 			syncFloat32command.CommandType = CommandType.StoredProcedure;
 
 			syncFloat32parameter = syncFloat32command.Parameters.Add("@value", System.Data.SqlDbType.Float, 4);
 			//syncFloat32command.Prepare();
+
+
+			syncGuidCommand = new SqlCommand("InsertGuid", syncConnection);
+			syncGuidCommand.CommandType = CommandType.StoredProcedure;
+
+			syncGuidParameter = syncGuidCommand.Parameters.Add("@value", System.Data.SqlDbType.UniqueIdentifier, 16);
+
 
 			asyncFloat32command = new SqlCommand("INSERT INTO Float32(value) VALUES (@value)", syncConnection);
 			asyncFloat32parameter = asyncFloat32command.Parameters.Add("@value", System.Data.SqlDbType.Float, 4);
@@ -137,6 +169,9 @@ namespace BenchmarkSqlWrite
 
 			truncateCommandFloat32 = new SqlCommand("TRUNCATE TABLE Float32", syncConnection);
 			truncateCommandFloat32.Prepare();
+
+			truncateCommandGuid = new SqlCommand("TRUNCATE TABLE Guid", syncConnection);
+			truncateCommandGuid.Prepare();
 		}
 
 		[IterationSetup]
@@ -144,9 +179,10 @@ namespace BenchmarkSqlWrite
 		{
 			truncateCommandInt32.ExecuteNonQuery();
 			truncateCommandFloat32.ExecuteNonQuery();
+			truncateCommandGuid.ExecuteNonQuery();
 		}
 
-		[Benchmark]
+		//[Benchmark]
 		public void InsertInt32()
 		{
 			for (int index = 0; index<int32numbers.Length; index++)
@@ -156,13 +192,23 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
-		[Benchmark]
+		//[Benchmark]
 		public void SyncFloat32()
 		{
 			for (int index = 0; index<float32numbers.Length; index++)
 			{
 				syncFloat32parameter.Value=float32numbers[index];
 				syncFloat32command.ExecuteNonQuery();
+			}
+		}
+
+		[Benchmark]
+		public void SyncGuid()
+		{
+			for (int index = 0; index < guids.Length; index++)
+			{
+				syncGuidParameter.Value = guids[index];
+				syncGuidCommand.ExecuteNonQuery();
 			}
 		}
 
@@ -182,7 +228,7 @@ namespace BenchmarkSqlWrite
 		{
 			for (int index = 0; index<float32numbers.Length; index++)
 			{
-				using (var connection = new SqlConnection("Data Source=(local);Initial Catalog=Northwind;Trusted_Connection=true;Connect Timeout=1;Application Name=Test;"))
+				using (var connection = new SqlConnection(connectionString))
 				using (var command = new SqlCommand("SELECT count(*) FROM Northwind.dbo.Categories", connection))
 				{
 					connection.Open();
@@ -197,7 +243,7 @@ namespace BenchmarkSqlWrite
 			{
 				command.Parameters.Add("value", SqlDbType.Float).Value=9.01f;
 
-				command.CommandText="InsertInt";
+				command.CommandText="InsertInt32";
 				command.CommandType=CommandType.StoredProcedure;
 
 				command.ExecuteNonQuery();

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SqlBench": {
+      "commandName": "Project",
+      "commandLineArgs": "--filter *"
+    }
+  }
+}
