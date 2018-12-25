@@ -9,6 +9,7 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.CsProj;
+using JetBrains.Profiler.Windows.Api;
 
 namespace BenchmarkSqlWrite
 {
@@ -16,25 +17,42 @@ namespace BenchmarkSqlWrite
 	{
 		static async Task Main(string[] args)
 		{
+			if (MemoryProfiler.IsActive)
+			{
+				MemoryProfiler.EnableAllocations();
+			}
+
+			bool managed = true;
+			Environment.SetEnvironmentVariable("System.Data.SqlClient.UseManagedSNIOnWindows",managed.ToString() );
 			await Task.CompletedTask;
+
 			if (args != null && args.Length > 0)
 			{
 				BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+				Console.ReadLine();
 			}
 			else
 			{
 				Stopwatch timer = new Stopwatch();
 
+
+
 				var bench = new WriteBenchmarks();
 				bench.GlobalSetup();
 				timer.Start();
+
+				if (MemoryProfiler.IsActive)
+				{
+					MemoryProfiler.Dump();
+				}
+
 				for (int index = 0; index < 100; index++)
 				{
-					//bench.IterationSetup();
-					//bench.SyncFloat32();
-
 					bench.IterationSetup();
-					bench.SyncGuid();
+					bench.SyncFloat32();
+
+					//bench.IterationSetup();
+					//bench.SyncGuid();
 
 					//bench.IterationSetup();
 					//await bench.AsyncFloat32();
@@ -43,14 +61,22 @@ namespace BenchmarkSqlWrite
 
 					//bench.OpenClose();
 				}
+
+				if (MemoryProfiler.IsActive)
+				{
+					MemoryProfiler.Dump();
+				}
+
 				timer.Stop();
 				bench.GlobalCleanup();
+
+
 
 				Console.WriteLine(timer.Elapsed);
 
 			}
 
-			Console.ReadLine();
+			
 		}
 	}
 
@@ -192,7 +218,7 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
-		//[Benchmark]
+		[Benchmark]
 		public void SyncFloat32()
 		{
 			for (int index = 0; index<float32numbers.Length; index++)
@@ -202,7 +228,7 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
-		[Benchmark]
+		//[Benchmark]
 		public void SyncGuid()
 		{
 			for (int index = 0; index < guids.Length; index++)

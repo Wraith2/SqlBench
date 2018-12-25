@@ -11,8 +11,13 @@
   <ItemGroup>
     <!--<PackageReference Include="Microsoft.Private.CoreFx.NETCoreApp" Version="4.6.0-preview3-26501-01" />-->
     <PackageReference Include="BenchmarkDotNet" Version="0.11.3" />
-    <PackageReference Include="runtime.native.System.Data.SqlClient.sni" Version="4.6.0-dev.18620.1" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.7.0-dev.18620.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.7.0-dev.18621.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="JetBrains.Profiler.Windows.Api">
+      <HintPath>..\..\JetBrains.Profiler.SelfSdk.2018.3\JetBrains.Profiler.Windows.Api.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <PropertyGroup>
