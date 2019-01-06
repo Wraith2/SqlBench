@@ -20,7 +20,8 @@
     </Reference>
   </ItemGroup>
 
-  <PropertyGroup>
-    <!--<PackageConflictPreferredPackages>Microsoft.Private.CoreFx.NETCoreApp.4.6.0-preview3-26501-01;runtime.win-x64.Microsoft.Private.CoreFx.NETCoreApp;$(PackageConflictPreferredPackages)</PackageConflictPreferredPackages>-->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'"><!--<PackageConflictPreferredPackages>Microsoft.Private.CoreFx.NETCoreApp.4.6.0-preview3-26501-01;runtime.win-x64.Microsoft.Private.CoreFx.NETCoreApp;$(PackageConflictPreferredPackages)</PackageConflictPreferredPackages>-->
+  
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 </Project>

@@ -22,7 +22,7 @@ namespace BenchmarkSqlWrite
 				MemoryProfiler.EnableAllocations();
 			}
 
-			bool managed = true;
+			bool managed = false;
 			Environment.SetEnvironmentVariable("System.Data.SqlClient.UseManagedSNIOnWindows",managed.ToString() );
 			await Task.CompletedTask;
 
@@ -48,13 +48,14 @@ namespace BenchmarkSqlWrite
 
 				for (int index = 0; index < 100; index++)
 				{
-					bench.IterationSetup();
-					bench.SyncFloat32();
-
 					//bench.IterationSetup();
-					//bench.SyncGuid();
 
-					//bench.IterationSetup();
+					//bench.SyncFloat32();
+
+					//bench.ReadOrderDetails();
+
+					bench.SyncGuid();
+
 					//await bench.AsyncFloat32();
 
 					//bench.ChangeType();
@@ -218,7 +219,7 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
-		[Benchmark]
+		//[Benchmark]
 		public void SyncFloat32()
 		{
 			for (int index = 0; index<float32numbers.Length; index++)
@@ -228,7 +229,7 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
-		//[Benchmark]
+		[Benchmark]
 		public void SyncGuid()
 		{
 			for (int index = 0; index < guids.Length; index++)
@@ -248,6 +249,32 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
+		public int ReadOrderDetails()
+		{
+			var builder = new SqlConnectionStringBuilder(this.connectionString) { InitialCatalog = "Northwind" };
+			var connectionString = builder.ToString();
+			int max = 0;
+			for (int index = 0; index < 100; index++)
+			{
+				using (var connection = new SqlConnection(connectionString))
+				using (var command = new SqlCommand("SELECT * FROM [Order Details]", connection))
+				{
+					connection.Open();
+					using (var reader = command.ExecuteReader())
+					{
+						while (reader.Read())
+						{
+							int value = reader.GetInt32(0);
+							if (value > max)
+							{
+								max = value;
+							}
+						}
+					}
+				}
+			}
+			return max;
+		}
 
 		//[Benchmark]
 		public void OpenClose()
