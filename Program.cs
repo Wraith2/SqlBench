@@ -126,30 +126,8 @@ namespace BenchmarkSqlWrite
 
 	[MemoryDiagnoser]
 	[MarkdownExporter]
-	//[Config(typeof(Config))]
-	[InProcess]
 	public class WriteBenchmarks
 	{
-		public class Config : ManualConfig
-		{
-			public Config()
-			{
-				//Add(
-				//	Job.Default.With(
-				//		CsProjCoreToolchain.From(
-				//			new BenchmarkDotNet.Toolchains.DotNetCli.NetCoreAppSettings(
-				//				"netcoreapp3.0",
-				//				"3.0.100-preview-009738",
-				//				"CoreCLR3.0",
-				//				customDotNetCliPath: @"E:\Programming\csharp7\sdk\dotnet.exe"
-				//			)
-				//		)
-				//	)
-				//);
-				Add(Job.Default.With(CsProjCoreToolchain.NetCoreApp30));
-			}
-		}
-
 		private string connectionString;
 
 		private SqlConnection syncConnection;
