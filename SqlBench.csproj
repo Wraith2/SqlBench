@@ -4,13 +4,10 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>7.3</LangVersion>
-    <!-- <RuntimeFrameworkVersion>3.0.100-alpha1-009638</RuntimeFrameworkVersion> modify build in this line -->
-    <!--<RuntimeIdentifier>win-x64</RuntimeIdentifier>  make self-contained -->
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="Microsoft.Private.CoreFx.NETCoreApp" Version="4.6.0-preview3-26501-01" />-->
-    <PackageReference Include="BenchmarkDotNet" Version="0.11.3" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.11.3.921" />
     <PackageReference Include="System.Data.SqlClient" Version="4.7.0-dev.18621.1" />
   </ItemGroup>
 
@@ -20,8 +17,4 @@
     </Reference>
   </ItemGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'"><!--<PackageConflictPreferredPackages>Microsoft.Private.CoreFx.NETCoreApp.4.6.0-preview3-26501-01;runtime.win-x64.Microsoft.Private.CoreFx.NETCoreApp;$(PackageConflictPreferredPackages)</PackageConflictPreferredPackages>-->
-  
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
 </Project>
