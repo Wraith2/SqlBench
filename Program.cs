@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Reflection;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
@@ -24,14 +25,15 @@ namespace BenchmarkSqlWrite
 
 			bool managed = false;
 			Environment.SetEnvironmentVariable("System.Data.SqlClient.UseManagedSNIOnWindows",managed.ToString() );
+            Environment.SetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1");
 			await Task.CompletedTask;
 
-			if (args != null && args.Length > 0)
-			{
-				BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
-				Console.ReadLine();
-			}
-			else
+			//if (args != null && args.Length > 0)
+			//{
+			//	BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+			//	Console.ReadLine();
+			//}
+			//else
 			{
 				Stopwatch timer = new Stopwatch();
 
@@ -39,6 +41,40 @@ namespace BenchmarkSqlWrite
 
 				var bench = new WriteBenchmarks();
 				bench.GlobalSetup();
+
+
+				//var param = new SqlParameter("@value", System.Data.SqlDbType.Float); //new SqlParameter("@value", System.Data.SqlDbType.Float, 4);//bench.syncFloat32parameter;
+				//var internalField = param.GetType().GetField("_metaType", BindingFlags.NonPublic | BindingFlags.Instance);
+				//var internalMetaTypeBefore = internalField.GetValue(param);
+				//param.Value = (float)1.1;
+				////bench.syncFloat32command.ExecuteNonQuery();
+				//var internalMetaTypeAfter = internalField.GetValue(param);
+
+
+				//var metaTypeType = typeof(SqlCommand).Assembly.GetType("System.Data.SqlClient.MetaType");
+				//var getMetaTypeFromValue = metaTypeType.GetMethod(
+				//	"GetMetaTypeFromValue",
+				//	0, 
+				//	BindingFlags.Static | BindingFlags.NonPublic,
+				//	null,
+				//	CallingConventions.Standard,
+				//	new Type[] { typeof(Type),typeof(object),typeof(bool),typeof(bool) },
+				//	null
+				//);
+				//var calculateMetaType = getMetaTypeFromValue.Invoke(null, new object[] { typeof(float),null,false,false});
+
+
+				//var internalMetaType = internalField.GetValue(param);
+
+				//var validate = param.GetType().GetMethod("GetMetaTypeOnly", BindingFlags.NonPublic | BindingFlags.Instance);
+				//object metaType = validate.Invoke(param, null);
+
+				////var method = param.GetType().GetMethod("GetCoercedValue", BindingFlags.Instance | BindingFlags.NonPublic);
+				////object directValue = param.Value;
+				////object coercedValue = method.Invoke(param, BindingFlags.Instance | BindingFlags.NonPublic|BindingFlags.InvokeMethod,null,null, System.Globalization.CultureInfo.CurrentCulture);
+
+
+
 				timer.Start();
 
 				if (MemoryProfiler.IsActive)
@@ -48,20 +84,22 @@ namespace BenchmarkSqlWrite
 
 				for (int index = 0; index < 100; index++)
 				{
-					//bench.IterationSetup();
+                    //bench.IterationSetup();
 
-					//bench.SyncFloat32();
+                    //bench.SyncFloat32();
 
-					//bench.ReadOrderDetails();
+                    //bench.ReadOrderDetails();
 
-					bench.SyncGuid();
+                    bench.ReadStoredProc();
 
-					//await bench.AsyncFloat32();
+                    //bench.SyncGuid();
 
-					//bench.ChangeType();
+                    //await bench.AsyncFloat32();
 
-					//bench.OpenClose();
-				}
+                    //bench.ChangeType();
+
+                    //bench.OpenClose();
+                }
 
 				if (MemoryProfiler.IsActive)
 				{
@@ -74,7 +112,10 @@ namespace BenchmarkSqlWrite
 
 
 				Console.WriteLine(timer.Elapsed);
-
+				//if (!MemoryProfiler.IsActive)
+				//{
+				//	Console.ReadLine();
+				//}
 			}
 
 			
@@ -115,8 +156,8 @@ namespace BenchmarkSqlWrite
 		private SqlConnection asyncConnection;
 		private SqlCommand int32command;
 		private SqlParameter int32parameter;
-		private SqlCommand syncFloat32command;
-		private SqlParameter syncFloat32parameter;
+		public SqlCommand syncFloat32command;
+		public SqlParameter syncFloat32parameter;
 		private SqlCommand syncGuidCommand;
 		private SqlParameter syncGuidParameter;
 		private SqlCommand asyncFloat32command;
@@ -142,7 +183,7 @@ namespace BenchmarkSqlWrite
 			//builder.MultipleActiveResultSets = true;
 			//connectionString = builder.ToString();
 			//Console.WriteLine(connectionString);
-			connectionString = "Data Source=(local);Initial Catalog=Scratch;Integrated Security=false;Persist Security Info=True;User ID=user;Password=pass;Connect Timeout=1;MultipleActiveResultSets=True;";
+			connectionString = "Data Source=(local);Initial Catalog=Scratch;Integrated Security=false;Persist Security Info=True;User ID=user;Password=pass;Connect Timeout=1;MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=True;";
 
 			int32numbers = new object[1000];  //values in boxes so we don't box in the benchmark
 			Random random = new Random();
@@ -177,7 +218,7 @@ namespace BenchmarkSqlWrite
 			syncFloat32command = new SqlCommand("InsertFloat32", syncConnection);
 			syncFloat32command.CommandType = CommandType.StoredProcedure;
 
-			syncFloat32parameter = syncFloat32command.Parameters.Add("@value", System.Data.SqlDbType.Float, 4);
+			syncFloat32parameter = syncFloat32command.Parameters.Add("@value", System.Data.SqlDbType.Real, 4);
 			//syncFloat32command.Prepare();
 
 
@@ -188,7 +229,7 @@ namespace BenchmarkSqlWrite
 
 
 			asyncFloat32command = new SqlCommand("INSERT INTO Float32(value) VALUES (@value)", syncConnection);
-			asyncFloat32parameter = asyncFloat32command.Parameters.Add("@value", System.Data.SqlDbType.Float, 4);
+			asyncFloat32parameter = asyncFloat32command.Parameters.Add("@value", System.Data.SqlDbType.Real, 4);
 			//asyncFloat32command.Prepare();
 
 			truncateCommandInt32 = new SqlCommand("TRUNCATE TABLE Int32", syncConnection);
@@ -229,7 +270,7 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
-		[Benchmark]
+		//[Benchmark]
 		public void SyncGuid()
 		{
 			for (int index = 0; index < guids.Length; index++)
@@ -249,6 +290,7 @@ namespace BenchmarkSqlWrite
 			}
 		}
 
+		//[Benchmark]
 		public int ReadOrderDetails()
 		{
 			var builder = new SqlConnectionStringBuilder(this.connectionString) { InitialCatalog = "Northwind" };
@@ -276,8 +318,40 @@ namespace BenchmarkSqlWrite
 			return max;
 		}
 
-		//[Benchmark]
-		public void OpenClose()
+        [Benchmark]
+        public int ReadStoredProc()
+        {
+            var builder = new SqlConnectionStringBuilder(this.connectionString) { InitialCatalog = "Northwind" };
+            var connectionString = builder.ToString();
+            int max = 0;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                for (int index = 0; index < 100; index++)
+                {
+                    using (var command = new SqlCommand("select * from Employees", connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                int value = reader.GetInt32(reader.GetOrdinal("EmployeeID"));
+                                if (value > max)
+                                {
+                                    max = value;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return max;
+        }
+
+        
+
+        //[Benchmark]
+        public void OpenClose()
 		{
 			for (int index = 0; index<float32numbers.Length; index++)
 			{
