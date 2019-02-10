@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.11.3.921" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.7.0-dev.18621.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.7.0-dev.19106.1" />
   </ItemGroup>
 
   <ItemGroup>
